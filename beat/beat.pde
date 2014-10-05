@@ -5,6 +5,8 @@
     
   Music not working? Move "play.mp3" to the same dir as
   the executable.
+  
+  Music: Mat Zo & Porter Robinson - Easy, available here http://smarturl.it/MZPR-Easy-iTunes
 
   Free to redistribute under MIT License.
 ------------------------------------------*/
