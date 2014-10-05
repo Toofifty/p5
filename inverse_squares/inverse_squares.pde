@@ -101,31 +101,31 @@ class Square {
   
   // Update rotation value
   void update () {
-    float dr = sin(4*t*PI/(fps * rotate_time))/fps; // sin speeds up and slows down just perfect
+    float dr = sin(4*this.t*PI/(fps * rotate_time))/fps; // sin speeds up and slows down just perfect
     
     if (flip && f == 1) { // go in opposite direction if flip is enabled
-      r -= dr;
-      r = max(r, -PI/2);
-      r = min(r, 0);
+      this.r -= dr;
+      this.r = max(r, -PI/2);
+      this.r = min(r, 0);
     } else {
-      r += dr;            // apply regular rotation
-      r = min(r, PI/2);   // wouldn't be needed but doesn't stop exactly on PI/4
-      r = max(r, 0);      // shouldn't go far backwards either
+      this.r += dr;            // apply regular rotation
+      this.r = min(r, PI/2);   // wouldn't be needed but doesn't stop exactly on PI/4
+      this.r = max(r, 0);      // shouldn't go far backwards either
     }
-    t++;
+    this.t++;
   }
   
   void clear () {
-    t = 0;
-    r = 0;
+    this.t = 0;
+    this.r = 0;
   }
   
   void draw () {
     translate(this.x, this.y);              // go to point to apply rotation around square centre
-    rotate(r);                              // rotate by pre calculated r
+    rotate(this.r);                              // rotate by pre calculated r
     fill(this.c[0], this.c[1], this.c[2]);  // set fill colour
     rect(-sq_r, -sq_r, sq_d, sq_d);         // draw square centred around current point
-    rotate(-r);                             // rotate back
+    rotate(-this.r);                             // rotate back
     translate(-this.x, -this.y);            // move back
   }
 }
