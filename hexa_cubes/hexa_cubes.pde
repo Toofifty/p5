@@ -30,6 +30,7 @@ void setup () {
   noFill();                    // don't colour cubes
   stroke(50);                  // stroke cubes
   background(255);             // white background
+  smooth(8);                   // anti-alias lines
   
   for (int i = 0; i < num_cubes; i++) {
     cubes[i] = new Cube(i * size);       // create larger and larger cubes

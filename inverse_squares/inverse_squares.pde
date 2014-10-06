@@ -8,11 +8,11 @@
 
 // "Play with me!" variables.
 
-public int num_squares = 13;                     // odds work best
+public int num_squares = 7;                      // odds work best
 public int fps = 60;                             // fps
-public int size = 400;                           // screen size
+public int size = 300;                           // screen size
 public float rotate_time = 10;                   // seconds
-public float[] c1 = new float[]{4, 29, 55};      // default navy-blue-ish
+public float[] c1 = new float[]{32, 32, 32};     // default grey
 public float[] c2 = new float[]{255, 255, 255};  // default white
 public boolean flip = true;                      // flip direction after each phase
 public boolean record = false;                   // output to many, many png files
@@ -32,6 +32,7 @@ void setup () {
   background(c1[0], c1[1], c1[2]);                         // set background to c1 to start
   frameRate(fps);                                          // set framerate
   noStroke();                                              // remove black strokes
+  smooth(8);                                               // anti-alias lines
   
                                                            // Inital Variable Setup //
   sqs = new Square[num_squares*num_squares];               // create squares array
