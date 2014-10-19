@@ -1,5 +1,5 @@
 /*------------------------------------------
-  "Triterion"
+  "Trixel filter"
   By Alex Matheson
     toofifty.me | ello.co/purchase | github.com/toofifty
 
