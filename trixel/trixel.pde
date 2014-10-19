@@ -1,5 +1,5 @@
 /*------------------------------------------
-  "Trixel filter"
+  "Triterion"
   By Alex Matheson
     toofifty.me | ello.co/purchase | github.com/toofifty
 
@@ -10,9 +10,9 @@ boolean scan = true;     // move?
 boolean trixel = true;   // pixels or trixels?
 boolean eq_tri = true;   // use equilaterial tris? (requires 'trixel')
 boolean hexels = false;  // use hexels? (requires 'eq_tri')
-boolean output = false;  // draw to png and quit?
+boolean output = true;  // draw to png and quit?
 
-float res = 20;           // resolution : inverse! 10 means less trixels than 5
+float res = 10;           // resolution : inverse! 10 means less trixels than 5
 int opac = 250;          // opacity of the triangles, 0-255
 
 String out = "img";      // name of file output
