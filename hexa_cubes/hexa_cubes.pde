@@ -11,7 +11,7 @@
 public int t = 0;               // clock
 public int num_cubes = 10;      // number of cubes
 public int spread = 10;         // frames between new cubes rotating
-public int fps = 60;            // fps
+public int fps = 120;            // fps
 public int s_size = 300;        // screen size
 public float time = 120;        // frames it takes to rotate
 public float size = 20;         // size difference between cubes
@@ -26,7 +26,7 @@ void setup () {
                                // Graphics Setup //
   size(s_size, s_size, P3D);   // size
   ortho();                     // no perspective (needed to make hexagons)
-  frameRate(fps);              // set framerate
+  //frameRate(fps);              // set framerate
   noFill();                    // don't colour cubes
   stroke(50);                  // stroke cubes
   background(255);             // white background
