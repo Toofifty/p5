@@ -1,40 +1,47 @@
-public int drawCount = 0;
+public int fractalCount = 0;
 public Fractal fractal;
 
 public void setup() {
-  size(600, 600);
+  size(2560, 1440);
   smooth(8);
-  stroke(32);
-  noStroke();
-  frameRate(30);
+  frameRate(60);
   background(32);
-  fill(128);
-  fractal = new Fractal(256, width / 2, height / 2, false, true);
+  fill(124, 14, 194);
+  stroke(128);
+  fractal = new Fractal(512, width / 2, height / 2, false, true);
 }
 
 public void draw() {
-  
+  background(32);
+  fractal.draw();
 }
 
 public void keyPressed() {
   if (key == ' ') {
-    background(32);
-    fractal.draw();
-    print("Drew " + drawCount + " boxes.");
-    drawCount = 0;
     fractal.createChildren();
     fractal.slide();
+    print("Created " + fractalCount + " boxes. \n");
+    fractalCount = 0;
+  } else if (key == 'r') {
+    fractal = new Fractal(512, width / 2, height / 2, false, true);
   }
 }
 
 public class Fractal {
   
-  private float size;
-  private float x;
-  private float y;
-  private boolean axis; // true:vert false:horiz
-  private boolean dir; // true:up/left false:down/right
-  private Fractal[] children;
+  public float size;
+  public float x;
+  public float y;
+  public boolean axis; // true:vert false:horiz
+  public boolean dir; // true:up/left false:down/right
+  public Fractal[] children;
+  public boolean animate = false;
+  
+  public float x1;
+  public float y1;
+  public float x2;
+  public float y2;
+  public int t = 0;
   
   public Fractal(float size, float x, float y, boolean vert, boolean dir) {
     this.size = size;
@@ -42,6 +49,7 @@ public class Fractal {
     this.y = y;
     this.axis = vert;
     this.dir = dir;
+    ++fractalCount;
   }
   
   public void slide() {
@@ -51,16 +59,45 @@ public class Fractal {
       }
     }
     if (axis) { // vertical
-      if (dir) y -= size / 2;
-      else y += size / 2;
+      y1 = y;
+      if (dir) y2 = y - size / 2;
+      else y2 = y + size / 2;
     } else { // horizontal
-      if (dir) x += size / 2;
-      else x -= size / 2;
+      x1 = x;
+      if (dir) x2 = x + size / 2;
+      else x2 = x - size / 2;
+    }
+    animate = true;
+  }
+  
+  public void animate() {
+    if (children != null && children[1].children != null) {
+      for (Fractal child : children) {
+        child.animate();
+      }
+    } else {
+      if (y1 != 0) {
+        y = y1 + (dir ? -0.25F : 0.25F) * (sin((t / 100F - 0.5F) * PI) + 1) * size;
+      } else if (x1 != 0) {
+        x = x1 + (dir ? 0.25F : -0.25F) * (sin((t / 100F - 0.5F) * PI) + 1) * size;
+      } else {
+        print("No transform given.");
+      }
+      if (t >= 100) {
+        animate = false;
+        if (x1 != 0) x = x1 + (dir ? 0.5F : -0.5F) * size;
+        if (y1 != 0) y = y1 + (dir ? -0.5F : 0.5F) * size;
+      }
+      ++t;
     }
   }
   
   public void createChildren() {
-    if (children == null) {
+    if (children != null) {
+      for (Fractal child : children) {
+        child.createChildren();
+      }
+    } else {
       children = new Fractal[4];
       if (axis) { // vertical
         children[0] = new Fractal(size / 2, x - size / 4, y - size / 4, false,  true);
@@ -73,10 +110,6 @@ public class Fractal {
         children[2] = new Fractal(size / 2, x - size / 4, y + size / 4,  true,  true);
         children[3] = new Fractal(size / 2, x + size / 4, y + size / 4,  true, false);
       }
-    } else {
-      for (Fractal child : children) {
-        child.createChildren();
-      }
     }
   }
   
@@ -86,8 +119,8 @@ public class Fractal {
         child.draw();
       }
     } else {
+      if (animate) animate();
       rect(x - size / 2F, y - size / 2F, size, size);
-      drawCount += 1;
     }
   }
   
