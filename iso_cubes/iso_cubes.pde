@@ -2,23 +2,20 @@
 
   iso cubes
   
-  
-  
   @author: Toofifty
 
 ===========================*/
 public Box box;
-public final int boxsize = 243;
+public final int boxsize = 150;
 public float spinT = 0F;
 public float rollT = 0F;
 public float roll2T = 0F;
 
 public void setup() {
-  size(1920, 1080, P3D);
-  stroke(255);
-  strokeWeight(2);
+  size(600, 600, P3D);
   smooth(8);
-  frameRate(60);
+  frameRate(30);
+  blendMode(ADD);
   //fill(32);
   noFill();
   ortho(0, width, 0, height, 0, 10000);
@@ -28,6 +25,9 @@ public void setup() {
 
 public void draw() {
   background(32);
+  fill(255);
+  text(frameRate, 0, 12);
+  noFill();
   translate(width / 2, height / 2);
   rotateX(-0.6153187f);
   rotateY(PI/4);
@@ -35,7 +35,6 @@ public void draw() {
   rotateY(getSpin());
   rotateZ(getRoll());
   if (box.checkSize() >= boxsize) {
-    println("Restarting anim...");
     box = new Box(boxsize);
     spinT = 0F;
     rollT = 0F;
@@ -62,16 +61,27 @@ public float getRoll() {
 }
 
 public float getRoll2() {
-  if (roll2T > 1) {
+  if (roll2T > 1 && box.triangles == null) {
       noFill();
-      box.spreadChildren();
-      box.setZooming();
+      box.splitTriangles();
+      //box.spreadChildren();
+      //box.setZooming();
   }
-  if (box.spreading || rollT <= 1) {
+  if (box.spreading || rollT <= 1 || box.triangles != null) {
     return 0;
   }
   roll2T += 0.01F;
   return PI/4 * (sin((roll2T - 0.5) * PI) + 1);
+}
+
+public void keyPressed() {
+  if (key == ' ') {
+    if (!box.triangles[0].spreading) {
+      box.spreadTriangles();
+    } else {
+      box.collectTriangles();
+    }
+  }
 }
 
 public class Box {
@@ -81,6 +91,7 @@ public class Box {
   public float size;
   public float msize;
   public Box[] children;
+  public Triangle[] triangles;
   
   public boolean spreading = false;
   public boolean zooming = false;
@@ -158,6 +169,7 @@ public class Box {
     line(-s2, s2, -s6, -s2 + sl, s2, -s6);
   }
   
+  // split into sub-cubes
   public void split() {
     children = new Box[27];
     float cs = size / 3;
@@ -174,6 +186,31 @@ public class Box {
     spreading = true;
     for (Box child : children) {
       child.spreading = true; // hopefully i'm not on some sex offenders list now...
+    }
+  }
+  
+  public void splitTriangles() {
+    triangles = new Triangle[6];
+    triangles[0] = new Triangle(20, sqrt(3), 0, true);
+    triangles[1] = new Triangle(20, -sqrt(3), 0, false);
+    triangles[2] = new Triangle(20, sqrt(3) / 3 - 0.2, sqrt(2) - 0.1, false);
+    triangles[3] = new Triangle(20, -sqrt(3) / 3 + 0.2, sqrt(2) - 0.1, true);
+    triangles[4] = new Triangle(20, sqrt(3) / 3 - 0.2, -sqrt(2) + 0.1, false);
+    triangles[5] = new Triangle(20, -sqrt(3) / 3 + 0.2, -sqrt(2) + 0.1, true);
+    println("Split triangles.");
+  }
+  
+  public void spreadTriangles() {
+    for (Triangle tri : triangles) {
+      tri.collecting = false;
+      tri.spreading = true;
+    }
+  }
+  
+  public void collectTriangles() {
+    for (Triangle tri : triangles) {
+      tri.spreading = false;
+      tri.collecting = true;
     }
   }
   
@@ -204,6 +241,14 @@ public class Box {
   }
   
   public void draw() {
+    if (triangles != null) {
+      triangles[0].undoIso();
+      for (Triangle tri : triangles) {
+        tri.draw();
+      }
+      triangles[0].redoIso();
+      println(triangles[0].x);
+    } else
     if (children != null) {
       for (Box child : children) {
         child.draw();
@@ -212,16 +257,80 @@ public class Box {
       if (zooming) zoom();
       if (spreading) spread();
       if (animating) animate();
-      float distance = max(1, (dist(x, y, z, 0, 0, 0) - size * 2) * 2 - 100);
-      if (distance > 200) {
-        return;
-      } else {
-        stroke(255, 255F / distance);
-        //fill(32, 255F / distance);
-      }
+      
+      float distance = min(1, (dist(x, y, z, 0, 0, 0) - size * 2) / 100F);
+      if (distance >= 1) return;
+      stroke(127, 255 - floor(distance * 255F));
+      
       translate(x, y, z);
       box(size);
       translate(-x, -y, -z);
     }
   }
+}
+
+public class Triangle {
+  public float x;
+  public float y;
+  public float size;
+  public boolean left;
+  public boolean spreading = false;
+  public boolean collecting = false;
+  
+  public float SQ3 = sqrt(3);
+  
+  public Triangle(float size, float x, float y, boolean left) {
+    this.size = size;
+    this.x = x;
+    this.y = y;
+    this.left = left;
+  }
+  
+  public void undoIso() {
+    rotateY(-PI/4);
+    rotateX(0.6153187f);
+  }
+  
+  public void redoIso() {
+    rotateX(-0.6153187f);
+    rotateY(PI/4);
+  }
+  
+  public void spread() {
+    x = x * 1.01F;
+    y = x * 1.01F;
+  }
+  
+  public void collect() {
+    x /= 1.01F;
+    y /= 1.01F;
+  }
+  
+  public void draw() {
+    translate(x*16, y*16);
+    if (left) { // points left
+    stroke(255, 0, 0);
+      // point 1:
+      //   -sq2, 0
+      // point 2:
+      //      1, sq3 /2 
+      // point 3:
+      //      1, -sq3 /2
+      triangle(
+        sqrt(2) * -size, 0, 
+        (sqrt(3) - sqrt(2)) * size, -size,
+        (sqrt(3) - sqrt(2)) * size, size
+      );
+    } else { // points right
+      triangle(
+        sqrt(2) * size, 0, 
+        (sqrt(3) - sqrt(2)) * -size, -size,
+        (sqrt(3) - sqrt(2)) * -size, size
+      );
+    }
+    translate(-x*16, -y*16);
+    if (spreading) spread();
+    else if (collecting) collect();
+  }
+  
 }

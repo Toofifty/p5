@@ -1,5 +1,5 @@
 public int iteration = 0;
-public final int size = 2048; // initial. Grows (technically) infinitely larger
+public final int size = 512; // initial. Grows (technically) infinitely larger
 PGraphics background;
 
 public void setup() {
@@ -33,7 +33,7 @@ public void draw() {
       }
     }
     println(low + " " + high);
-    image(background, 0, 0);
+    image(loadImage("img.jpg"), -400, 0);
   }  
 }
 
