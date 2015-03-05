@@ -1,42 +1,41 @@
-/*------------------------------------------
-  "Bouncing Bubbles"
-  By Alex Matheson
-    toofifty.me | ello.co/purchase | github.com/toofifty
+/*=======================
 
-  Free to redistribute under MIT License.
-------------------------------------------*/
+  Bouncing bubbles
+  
+  @author: Toofifty
+  
+  =====================*/
 
-// "Play with me!" variables.
+// CUSTOM VALUES
 
 public int num_bubbles = 15;            // number of bubbles to generate
 public float spring = 0.05;             // bounciness
 public float gravity = 0.03;            // acceleration due to gravity
 public float friction = 0.01;           // de-acceleration when colliding
 public boolean lights = true;           // 3D or 2D looking balls
-public int[][] palette = new int[][] {  // possible bubble colours
-  { 111, 144, 162 },
-  { 71, 113, 135 },
-  { 17, 59, 81 },
-  { 3, 36, 54 },
+public color[] palette = new color[] {  // possible bubble colours
+  color(111, 144, 162),                 // any order, any amount
+  color(71, 113, 135),
+  color(17, 59, 81),
+  color(3, 36, 54),
 };
 
-// "Don't touch!" variables.
-
+// VARIABLES
 private Bubble[] bubbles = new Bubble[num_bubbles];
 
-// Processing setup call
+/** Setup sketch*/
 void setup () {
-                           // Graphics Setup //
-  size(1080, 720, P3D);    // size + init 3D
-  ortho();                 // not perspective
-  noStroke();              // no wireframes on balls
+  size(1280, 720, P3D);
+  ortho();
+  noStroke();
   
+  // create bubbles
   for (int i = 0; i < num_bubbles; i++) {
-    bubbles[i] = new Bubble(random(width), random(height), random(30, 150), i, bubbles); // create bubbles at random places
+    bubbles[i] = new Bubble(random(width), random(height), random(30, 150), i, bubbles);
   }
 }
 
-// Processing draw call
+/** Draw frame */
 void draw () {
   background(40, 84, 108); // refresh background
   if (lights) lights();    // make it look 3D with lights
@@ -48,45 +47,52 @@ void draw () {
   }
 }
 
+/** Bubble class */
 class Bubble {
-  float x, y;
-  float diameter;
-  float vx = 0;
-  float vy = 0;
-  int id;
-  int[] colour = new int[3];
-  Bubble[] others;
+  // attributes
+  private float x, y;
+  private final float diameter;
+  private float vx = 0;
+  private float vy = 0;
+  private final int id;
+  private final color colour;
+  private final Bubble[] others;
   
+  /** Create bubble at <x, y> size <d> id <id> and other bubles <o> */
   Bubble (float x, float y, float d, int id, Bubble[] o) {
     this.x = x;
     this.y = y;
     this.diameter = d;                  
-    this.id = id;                             // numerical id
-    this.others = o;                          // all others able to be collided with
-    this.colour = palette[int(random(0, 3))]; // grab a random colour from the palette
+    this.id = id;       // numerical id
+    this.others = o;    // all others able to be collided with
+    this.colour = palette[
+      int(random(0, palette.length))
+    ]; // grab a random colour from the palette
   }
   
+  /** Check with all 'others' whether a collision is happening */
   void collide () {
-    for (int i = id + 1; i < num_bubbles; i++) {               // iterate through every other bubble
-      float dx = others[i].x - this.x;                         // find x difference
-      float dy = others[i].y - this.y;                         // find y difference
-      float distance = sqrt(dx*dx + dy*dy);                    // find mag difference
-      float minDist = others[i].diameter/2 + this.diameter/2;  // find distance where the bubbles should collide
+    for (int i = id + 1; i < num_bubbles; i++) {               // iterate all other bubbles
+      float dx = others[i].x - this.x;                         // x difference
+      float dy = others[i].y - this.y;                         // y difference
+      float distance = dist(0, 0, dx, dy);                     // |difference|
+      float minDist = others[i].diameter/2 + this.diameter/2;  // distance between centres
       
-      if (distance < minDist) {                                // if closer (touching)
-        float angle = atan2(dy, dx);                           // find angle of collision
-        float targetX = this.x + cos(angle) * minDist;         // find resulting x velocity
-        float targetY = this.y + sin(angle) * minDist;         // find resulting y velocity
-        float ax = (targetX - others[i].x) * spring;           // bounce in x direction depending on spring
-        float ay = (targetY - others[i].y) * spring;           // bounce in y direction depending on spring
-        this.vx -= ax;                                         // add velocity in x
-        this.vy -= ay;                                         // add velocity in y
-        others[i].vx += ax;                                    // add velocity to other x
-        others[i].vy += ay;                                    // add velocity to other y
+      if (distance < minDist) {                        // if touching
+        float angle = atan2(dy, dx);                   // angle of collision
+        float targetX = this.x + cos(angle) * minDist; // find resulting x velocity
+        float targetY = this.y + sin(angle) * minDist; // find resulting y velocity
+        float ax = (targetX - others[i].x) * spring;   // bounce in x direction
+        float ay = (targetY - others[i].y) * spring;   // bounce in y direction
+        this.vx -= ax;                                 // add velocity in x
+        this.vy -= ay;                                 // add velocity in y
+        others[i].vx += ax;                            // add velocity to other's x
+        others[i].vy += ay;                            // add velocity to other's y
       }
     }
   }
   
+  /** Move the bubble one step */
   void move () {
     if (mousePressed) {                           // mouse dragging
       float disX = mouseX - this.x;               // distance between mouse and x
@@ -122,10 +128,11 @@ class Bubble {
     }
   }
   
+  /** Draw bubble */
   void draw () {
-    translate(this.x, this.y);                                  // move to position
-    fill(this.colour[0], this.colour[1], this.colour[2], 200);  // fill with bubble colour
-    sphere(diameter/2);                                         // draw
-    translate(-this.x, -this.y);                                // move back
+    translate(this.x, this.y);   // move to position
+    fill(colour);                // fill with bubble colour
+    sphere(diameter/2);          // draw
+    translate(-this.x, -this.y); // move back
   }
 }
