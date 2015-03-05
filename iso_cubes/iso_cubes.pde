@@ -74,14 +74,12 @@ public float getRoll2() {
   return PI/4 * (sin((roll2T - 0.5) * PI) + 1);
 }
 
-public void keyPressed() {
-  if (key == ' ') {
-    if (!box.triangles[0].spreading) {
-      box.spreadTriangles();
-    } else {
-      box.collectTriangles();
-    }
+public int count(Object[] array) {
+  int c = 0;
+  for (Object obj : array) {
+    if (obj != null) c++;
   }
+  return c;
 }
 
 public class Box {
@@ -128,7 +126,7 @@ public class Box {
     float s2 = size / 2;
     float s6 = size / 6;
     float sl = size * lineLength;
-    
+    stroke(255);
     // most confusing shit ever
     // left vert
     line(-s2, s2, s6, -s2, s2 - sl, s6);
@@ -185,32 +183,25 @@ public class Box {
   public void spreadChildren() {
     spreading = true;
     for (Box child : children) {
-      child.spreading = true; // hopefully i'm not on some sex offenders list now...
+      child.spreading = true;
     }
   }
   
   public void splitTriangles() {
-    triangles = new Triangle[6];
-    triangles[0] = new Triangle(20, sqrt(3), 0, true);
-    triangles[1] = new Triangle(20, -sqrt(3), 0, false);
-    triangles[2] = new Triangle(20, sqrt(3) / 3 - 0.2, sqrt(2) - 0.1, false);
-    triangles[3] = new Triangle(20, -sqrt(3) / 3 + 0.2, sqrt(2) - 0.1, true);
-    triangles[4] = new Triangle(20, sqrt(3) / 3 - 0.2, -sqrt(2) + 0.1, false);
-    triangles[5] = new Triangle(20, -sqrt(3) / 3 + 0.2, -sqrt(2) + 0.1, true);
-    println("Split triangles.");
-  }
-  
-  public void spreadTriangles() {
-    for (Triangle tri : triangles) {
-      tri.collecting = false;
-      tri.spreading = true;
-    }
-  }
-  
-  public void collectTriangles() {
-    for (Triangle tri : triangles) {
-      tri.spreading = false;
-      tri.collecting = true;
+    triangles = new Triangle[54];
+    int c = 0;
+    for (int i = 0; i < 6; i++) {
+      int n = int(12 - 2 * abs(2.5 - i));
+      float x = -sqrt(3) - 1F / sqrt(3) + (i * sqrt(3) / 2);
+      float y = 1.5F + (i >= 3 ? (5 - i) : i) / 2F;
+      for (int j = 0; j < n; j++) {        
+        if (j % 2 == 0 && i < 3 || j % 2 != 0 && i >= 3) {
+          triangles[c] = new Triangle(41, x + 1F / 2F / sqrt(3), j / 2F - y, true);
+        } else {
+          triangles[c] = new Triangle(41, x, j / 2F - y, false);
+        }
+        c++;
+      }
     }
   }
   
@@ -241,13 +232,12 @@ public class Box {
   }
   
   public void draw() {
-    if (triangles != null) {
+    if (triangles != null && triangles[0].spreading) {
       triangles[0].undoIso();
       for (Triangle tri : triangles) {
         tri.draw();
       }
       triangles[0].redoIso();
-      println(triangles[0].x);
     } else
     if (children != null) {
       for (Box child : children) {
@@ -272,17 +262,24 @@ public class Box {
 public class Triangle {
   public float x;
   public float y;
+  public float initx;
+  public float inity;
   public float size;
   public boolean left;
-  public boolean spreading = false;
-  public boolean collecting = false;
+  public float spreadT = 0;
+  public boolean spreading = true;
   
   public float SQ3 = sqrt(3);
   
+  // triangle centre to point ( One Div SQuare root 3 )
+  public float oDSQ3 = 1 / sqrt(3);
+  // triangle centre to closest edge ( Half Div SQuare root 3 )
+  public float hDSQ3 = oDSQ3 / 2;
+  
   public Triangle(float size, float x, float y, boolean left) {
     this.size = size;
-    this.x = x;
-    this.y = y;
+    this.initx = x * size;
+    this.inity = y * size;
     this.left = left;
   }
   
@@ -297,40 +294,45 @@ public class Triangle {
   }
   
   public void spread() {
-    x = x * 1.01F;
-    y = x * 1.01F;
-  }
-  
-  public void collect() {
-    x /= 1.01F;
-    y /= 1.01F;
+    if (!spreading) {
+      return;
+    } else if (spreadT >= 2 && spreading) {
+      x = initx;
+      y = inity;
+      box.spreadChildren();
+      box.setZooming();
+      spreading = false;
+    } else {
+      x = initx + initx * (sin((spreadT - 0.5F) * PI) + 1) / 2;
+      y = inity + inity * (sin((spreadT - 0.5F) * PI) + 1) / 2;
+      spreadT += 0.01F;
+    }
   }
   
   public void draw() {
-    translate(x*16, y*16);
+    spread();
+    translate(x, y);
+    stroke(255);
     if (left) { // points left
-    stroke(255, 0, 0);
       // point 1:
-      //   -sq2, 0
+      //  -oDSQ3, 0
       // point 2:
-      //      1, sq3 /2 
+      //   hDSQ3, 0.5 
       // point 3:
-      //      1, -sq3 /2
+      //   hDSQ3, -0.5
       triangle(
-        sqrt(2) * -size, 0, 
-        (sqrt(3) - sqrt(2)) * size, -size,
-        (sqrt(3) - sqrt(2)) * size, size
+         size * -oDSQ3, size *    0, 
+         size *  hDSQ3, size *  0.5,
+         size *  hDSQ3, size * -0.5
       );
     } else { // points right
       triangle(
-        sqrt(2) * size, 0, 
-        (sqrt(3) - sqrt(2)) * -size, -size,
-        (sqrt(3) - sqrt(2)) * -size, size
+         size *  oDSQ3, size *    0, 
+         size * -hDSQ3, size *  0.5,
+         size * -hDSQ3, size * -0.5
       );
     }
-    translate(-x*16, -y*16);
-    if (spreading) spread();
-    else if (collecting) collect();
+    translate(-x, -y);
   }
   
 }
