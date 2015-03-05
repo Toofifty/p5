@@ -1,338 +1,427 @@
-/*===========================
+/*=======================
 
-  iso cubes
+  Isometric Trickery
   
   @author: Toofifty
+  
+  =======================
+  
+  TODO:
+    - Toggle extra rotations on/off
+    - Toggle stage 1 on/off
+    - Custom foreground (line) colour
 
-===========================*/
+  =====================*/
+
+
+// CUSTOM VALUES
+public final int boxSize = 150;  // main box size (sub boxes are /3)
+public final int triSize = 41;   // triangle size
+public final float rate = 0.01F; // speed of the animation
+public final color background = color(32);
+
+// VARIABLES
 public Box box;
-public final int boxsize = 150;
-public float spinT = 0F;
-public float rollT = 0F;
-public float roll2T = 0F;
+public float xroll; // [0, 1] of x rotation
+public float yroll; // [0, 1] of y rotation
+public float zroll; // [0, 1] of z rotation
 
+// STAGES: 0 = draw lines + rotate
+//         1 = split into cubes + rotate
+//         2 = split into triangles + spread
+//         3 = spread cubes
+public int stage = 0;
+
+// CONSTANTS
+public final float SQ3 = sqrt(3);      // sqrt(3)
+public final float SQ3D2 = SQ3 / 2F;   // sqrt(3) / 2
+public final float oDSQ3 = 1F / SQ3;   // 1 / sqrt(3)
+public final float hDSQ3 = oDSQ3 / 2F; // 1 / 2 / sqrt(3)
+
+/** Setup sketch */
 public void setup() {
   size(600, 600, P3D);
   smooth(8);
-  frameRate(30);
-  blendMode(ADD);
-  //fill(32);
+  frameRate(30); // 60 for fast computers
+  strokeWeight(2);
   noFill();
   ortho(0, width, 0, height, 0, 10000);
-  box = new Box(boxsize);
-  box.animating = true;
+  box = new Box(boxSize);
+  println("STAGE: " + stage);
 }
 
+/** Draw frame */
 public void draw() {
-  background(32);
-  fill(255);
-  text(frameRate, 0, 12);
-  noFill();
+  // refresh frame
+  background(background);
+  // centre
   translate(width / 2, height / 2);
-  rotateX(-0.6153187f);
-  rotateY(PI/4);
-  rotateX(getRoll2());
-  rotateY(getSpin());
-  rotateZ(getRoll());
-  if (box.checkSize() >= boxsize) {
-    box = new Box(boxsize);
-    spinT = 0F;
-    rollT = 0F;
-    roll2T = 0F;
-    box.animating = true;
-  }
+  // rotate to iso
+  iso();
+  // rotate and manage stages
+  doRotations();
   box.draw();
 }
 
-public float getSpin() {
-  if (!box.spreading || spinT > 1) {
-    return 0;
-  }
-  spinT += 0.005F;
-  return PI/4 * (sin((spinT - 0.5) * PI) + 1);
+/** Set angles to iso */
+public void iso() {
+  rotateX(-0.6153187F);
+  rotateY(PI / 4);
 }
 
-public float getRoll() {
-  if (box.spreading || rollT > 1) {
-    return 0;
-  }
-  rollT += 0.01F;
-  return PI/4 * (sin((rollT - 0.5) * PI) + 1);
+/** Set angles back from iso */
+public void unIso() {
+  rotateY(-PI / 4);
+  rotateX(0.6153187F);
 }
 
-public float getRoll2() {
-  if (roll2T > 1 && box.triangles == null) {
-      noFill();
-      box.splitTriangles();
-      //box.spreadChildren();
-      //box.setZooming();
+/** Do smooth rotations and advance stages */
+public void doRotations() {
+  if (zroll < 1 && stage == 0) {
+    zroll += rate;
+    rotateZ(PI / 4 * sinLerp(zroll));
+    
+  } else if (xroll < 1 && stage == 1) {
+    xroll += rate;
+    rotateX(PI / 4 * sinLerp(xroll));
+    
+  } else if (stage == 2) {
+    // this stage is handled in the triangle class
+    return;
+    
+  } else if (yroll < 1 && stage == 3) {
+    box.setZooming(true);
+    box.setSpreading(true);
+    yroll += rate;
+    rotateY(PI / 4 * sinLerp(yroll));
+    
+  } else {
+    // increment stage
+    stage++;
+    if (stage > 3) {
+      // reset counters
+      stage = 0;
+      xroll = 0;
+      yroll = 0;
+      zroll = 0;
+      // reset box
+      box = new Box(boxSize);
+      println("RESET ANIM");
+    }
+    println("STAGE: " + stage);
   }
-  if (box.spreading || rollT <= 1 || box.triangles != null) {
-    return 0;
-  }
-  roll2T += 0.01F;
-  return PI/4 * (sin((roll2T - 0.5) * PI) + 1);
 }
 
-public int count(Object[] array) {
-  int c = 0;
-  for (Object obj : array) {
-    if (obj != null) c++;
-  }
-  return c;
+/** Get a smoothed sin value from linear */
+public float sinLerp(float x) {
+  return sin((x - 0.5F) * PI) + 1;
 }
 
+/** Box class */
 public class Box {
-  public float x;
-  public float y;
-  public float z;
-  public float size;
-  public float msize;
-  public Box[] children;
-  public Triangle[] triangles;
   
-  public boolean spreading = false;
-  public boolean zooming = false;
-  public boolean animating = false;
+  // attributes
+  private float x, y, z;
+  private float size;
+  private final float initialSize;
   
-  public float zoomt = 0;
+  // sub shapes
+  private Box[] subBoxes;
+  private Triangle[] subTris;
   
-  public float lineLength = 0;
+  // counters [0, 1]
+  public float zoom;
+  public float line;
   
+  // flags
+  public boolean zooming;
+  public boolean spreading;
+  
+  /** Create a box at screen centre */
   public Box(float size) {
     this.size = size;
-    this.msize = size;
+    this.initialSize = size;
+    // x, y, z will stay at 0, 0, 0
   }
   
-  public Box(float size, float x, float y, float z) {
+  /** Create a box at custom coords */
+  private Box(float size, float x, float y, float z) {
     this.size = size;
-    this.msize = size;
+    this.initialSize = size;
     this.x = x;
     this.y = y;
     this.z = z;
   }
   
-  public void addChildBox(int i, int j, int k, float cs) {
-    Box child = new Box(cs, x + i * cs, y + j * cs, z + k * cs);
-    children[(i + 1) + (j + 1) * 3 + (k + 1) * 9] = child;
+  /** Set the centre box to zooming */
+  public void setZooming(boolean flag) {
+    if (subBoxes[13].zooming != flag)
+      subBoxes[13].zooming = flag;
   }
   
-  public void animate() {
-    lineLength += 0.01F;
-    if (lineLength >= 1) {
-      box.split();
-      animating = false;
+  /** Set all boxes to spreading */
+  public void setSpreading(boolean flag) {
+    if (subBoxes[0].spreading != flag) {
+      for (Box sub : subBoxes) {
+        sub.spreading = flag;
+      }
     }
-    float s2 = size / 2;
-    float s6 = size / 6;
-    float sl = size * lineLength;
+  }
+  
+  /** Increase size of box */
+  private void zoom() {
+    zoom += rate;
+    size = initialSize * (sinLerp(zoom) + 1);
+  }
+  
+  /** Move coordinates away from 0, 0, 0 */
+  private void spread() {
+    x *= (1 + rate * 2);
+    y *= (1 + rate * 2);
+    z *= (1 + rate * 2);
+  }
+  
+  /** Add a subBox at i, j, k offset from centre */
+  private void addSubBox(int i, int j, int k, float boxSize) {
+    Box subBox = new Box(boxSize, 
+      x + boxSize * i, y + boxSize * j, k + boxSize * k
+    );
+    
+    final int id = (i + 1) + (j + 1) * 3 + (k + 1) * 9;
+    subBoxes[id] = subBox;
+  }
+  
+  /** Draw the lines that split the main box */
+  private void animateLines() {
+    line += rate;
+    
+    if (line > 1) line = 1;
+    
+    // constants 
+    final float s2 = size / 2;
+    final float s6 = size / 6;
+    final float sl = size * line;
+    
     stroke(255);
-    // most confusing shit ever
-    // left vert
+    
+    /* Front faces */
+    
+    // front left vertical
     line(-s2, s2, s6, -s2, s2 - sl, s6);
     line(-s2, -s2, -s6, -s2, -s2 + sl, -s6);
-    // left horiz
+    
+    // front left horizontal
     line(-s2, s6, -s2, -s2, s6, -s2 + sl);
     line(-s2, -s6, s2, -s2, -s6, s2 - sl);
-    // right vert
+    
+    // front right vertical
     line(s6, s2, s2, s6, s2 - sl, s2);
     line(-s6, -s2, s2, -s6, -s2 + sl, s2);
-    // right horiz
+    
+    // front right horizontal
     line(s2, -s6, s2, s2 - sl, -s6, s2);
     line(-s2, s6, s2, -s2 + sl, s6, s2);
-    // top 'vert'
+    
+    // top vertical 
     line(s6, -s2, s2, s6, -s2, s2 - sl);
     line(-s6, -s2, -s2, -s6, -s2, -s2 + sl);
-    // top 'horiz'
+    
+    // top horizontal
     line(s2, -s2, -s6, s2 - sl, -s2, -s6);
     line(-s2, -s2, s6, -s2 + sl, -s2, s6);
     
-    // back right vert
+    /* Back faces */
+    
+    // back right vertical
     line(s2, s2, -s6, s2, s2 - sl, -s6);
     line(s2, -s2, s6, s2, -s2 + sl, s6);
-    // back right horiz
+    
+    // back right horizontal
     line(s2, -s6, -s2, s2, -s6, -s2 + sl);
     line(s2, s6, s2, s2, s6, s2 - sl);
-    // back left vert
+    
+    // back left vertical
     line(-s6, s2, -s2, -s6, s2 - sl, -s2);
     line(s6, -s2, -s2, s6, -s2 + sl, -s2);
-    // back left horiz
+    
+    // back left horizontal
     line(s2, s6, -s2, s2 - sl, s6, -s2);
     line(-s2, -s6, -s2, -s2 + sl, -s6, -s2);
-    // bottom 'vert'
+    
+    // bottom vertical
     line(-s6, s2, s2, -s6, s2, s2 - sl);
     line(s6, s2, -s2, s6, s2, -s2 + sl);
-    // bottom 'horiz'
+    
+    // bottom horizontal
     line(s2, s2, s6, s2 - sl, s2, s6);
     line(-s2, s2, -s6, -s2 + sl, s2, -s6);
   }
   
-  // split into sub-cubes
-  public void split() {
-    children = new Box[27];
-    float cs = size / 3;
+  /** Split into 9 * 9 smaller cubes */
+  private void splitBoxes() {    
+    subBoxes = new Box[27];
+    float subSize = size / 3;
     for (int i = -1; i < 2; i++) {
       for (int j = -1; j < 2; j++) {
         for (int k = -1; k < 2; k++) {
-          addChildBox(i, j, k, cs);
+          addSubBox(i, j, k, subSize);
         }
       }
     }
   }
   
-  public void spreadChildren() {
-    spreading = true;
-    for (Box child : children) {
-      child.spreading = true;
-    }
-  }
-  
-  public void splitTriangles() {
-    triangles = new Triangle[54];
+  /** Split into 54 small triangles */
+  private void splitTriangles() {
+    subTris = new Triangle[54];
+    // count
     int c = 0;
+    // iterate through each column
     for (int i = 0; i < 6; i++) {
+      
+      // get # tris in column
       int n = int(12 - 2 * abs(2.5 - i));
-      float x = -sqrt(3) - 1F / sqrt(3) + (i * sqrt(3) / 2);
+      // get x position of RIGHT tris (change later for LEFT)
+      float x = -SQ3 - oDSQ3 + (i * SQ3D2);
+      // get y offset (centre columns need to be raised)
       float y = 1.5F + (i >= 3 ? (5 - i) : i) / 2F;
-      for (int j = 0; j < n; j++) {        
+      
+      // iterate over # tris
+      for (int j = 0; j < n; j++) {
+        
         if (j % 2 == 0 && i < 3 || j % 2 != 0 && i >= 3) {
-          triangles[c] = new Triangle(41, x + 1F / 2F / sqrt(3), j / 2F - y, true);
+          subTris[c] = new Triangle(triSize, x + 1F / 2F / SQ3, j / 2F - y, true);
         } else {
-          triangles[c] = new Triangle(41, x, j / 2F - y, false);
+          subTris[c] = new Triangle(triSize, x, j / 2F - y, false);
         }
-        c++;
+        
+        c++; // increment count
       }
     }
   }
   
-  public void spread() {
-    x = x * 1.01F;
-    y = y * 1.01F;
-    z = z * 1.01F;
-  }
-  
-  public float checkSize() {
-    if (children != null) {
-      return children[13].size;
-    } else {
-      return 0;
+  /** Draw all sub boxes */
+  private void drawSubBoxes() {    
+    if (subBoxes == null) 
+      splitBoxes();
+      
+    for (Box sub : subBoxes) {
+      sub.drawAsSubBox();
     }
   }
   
-  public void setZooming() {
-    children[13].zooming = true;
-    /*for (Box child : children) {
-      child.zooming = true;
-    }*/
+  /** Draw all sub tris */
+  private void drawSubTris() {
+    unIso();
+    if (subTris == null) 
+      splitTriangles();
+      
+    for (Triangle tri : subTris) {
+      tri.draw();
+    }
   }
   
-  public void zoom() {
-    size = msize + msize * (sin((zoomt - 0.5F) * PI) + 1);
-    zoomt += 0.005F;
+  /** Draw with opacity, zoom and spread */
+  private void drawAsSubBox(){    
+    if (zooming) zoom();
+    if (spreading) spread();
+    
+    final float centreDist = dist(x, y, z, 0, 0, 0);
+    final float opacityMult = min(1, (centreDist - size * 2) / 100F);
+    // Don't draw if opacity should be 0
+    if (opacityMult >= 1) return;
+    stroke(255, 255 - floor(opacityMult * 255));
+    
+    translate(x, y, z);
+    box(size);
+    translate(-x, -y, -z);
   }
   
+  /** Draw differently per stage */
   public void draw() {
-    if (triangles != null && triangles[0].spreading) {
-      triangles[0].undoIso();
-      for (Triangle tri : triangles) {
-        tri.draw();
-      }
-      triangles[0].redoIso();
-    } else
-    if (children != null) {
-      for (Box child : children) {
-        child.draw();
-      }
-    } else {
-      if (zooming) zoom();
-      if (spreading) spread();
-      if (animating) animate();
-      
-      float distance = min(1, (dist(x, y, z, 0, 0, 0) - size * 2) / 100F);
-      if (distance >= 1) return;
-      stroke(127, 255 - floor(distance * 255F));
-      
-      translate(x, y, z);
+    switch(stage) {
+    case 0: 
+      // draw box and lines
+      animateLines();
       box(size);
-      translate(-x, -y, -z);
+      break;
+      
+    case 1:
+    case 3: 
+      // just draw sub boxes
+      drawSubBoxes();
+      break;
+      
+    case 2: 
+      // just draw sub tris
+      drawSubTris();
+      break;
     }
   }
 }
 
+/** Triangle class */
 public class Triangle {
-  public float x;
-  public float y;
-  public float initx;
-  public float inity;
-  public float size;
-  public boolean left;
-  public float spreadT = 0;
-  public boolean spreading = true;
   
-  public float SQ3 = sqrt(3);
+  // attributes
+  private float x, y, z;
+  private float size;
+  private final float initx, inity;
+  private final float initialSize;
+  private final boolean left;
+  private float rotation;
   
-  // triangle centre to point ( One Div SQuare root 3 )
-  public float oDSQ3 = 1 / sqrt(3);
-  // triangle centre to closest edge ( Half Div SQuare root 3 )
-  public float hDSQ3 = oDSQ3 / 2;
+  // counters [0, 1]
+  private float spread;
   
+  // flags [0, 1]
+  public boolean spreading;
+  
+  /** Create a <size> triange at <x, y> facing left (true) or right (false)*/
   public Triangle(float size, float x, float y, boolean left) {
-    this.size = size;
+    this.initialSize = size;
+    this.left = left;
     this.initx = x * size;
     this.inity = y * size;
-    this.left = left;
   }
   
-  public void undoIso() {
-    rotateY(-PI/4);
-    rotateX(0.6153187f);
-  }
-  
-  public void redoIso() {
-    rotateX(-0.6153187f);
-    rotateY(PI/4);
-  }
-  
-  public void spread() {
-    if (!spreading) {
-      return;
-    } else if (spreadT >= 2 && spreading) {
+  private void spread() {
+    if (spread >= 2 && stage == 2) {
+      stage++;
+      println("STAGE: " + stage);
+    } else if (spread >= 2) {
       x = initx;
       y = inity;
-      box.spreadChildren();
-      box.setZooming();
-      spreading = false;
+      rotation = 0;
+      size = initialSize;
     } else {
-      x = initx + initx * (sin((spreadT - 0.5F) * PI) + 1) / 2;
-      y = inity + inity * (sin((spreadT - 0.5F) * PI) + 1) / 2;
-      spreadT += 0.01F;
+      spread += rate * 2;
+      x = initx * (sinLerp(spread) / 4 + 1);
+      y = inity * (sinLerp(spread) / 4 + 1);
+      rotation = PI / 3F * sinLerp(spread / 2) * (left ? 1 : -1);
+      size = initialSize * (1 - sinLerp(spread) / 4F);
     }
   }
   
   public void draw() {
     spread();
+    
     translate(x, y);
+    rotateZ(rotation);
     stroke(255);
-    if (left) { // points left
-      // point 1:
-      //  -oDSQ3, 0
-      // point 2:
-      //   hDSQ3, 0.5 
-      // point 3:
-      //   hDSQ3, -0.5
+    if (left) {
       triangle(
-         size * -oDSQ3, size *    0, 
-         size *  hDSQ3, size *  0.5,
-         size *  hDSQ3, size * -0.5
+        size * -oDSQ3, size *    0,
+        size *  hDSQ3, size *  0.5,
+        size *  hDSQ3, size * -0.5
       );
-    } else { // points right
+    } else {
       triangle(
-         size *  oDSQ3, size *    0, 
-         size * -hDSQ3, size *  0.5,
-         size * -hDSQ3, size * -0.5
+        size *  oDSQ3, size *    0,
+        size * -hDSQ3, size *  0.5,
+        size * -hDSQ3, size * -0.5
       );
     }
+    rotateZ(-rotation);
     translate(-x, -y);
   }
-  
 }
