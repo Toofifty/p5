@@ -17,7 +17,7 @@
 // CUSTOM VALUES
 public final int boxSize = 150;  // main box size (sub boxes are /3)
 public final int triSize = 41;   // triangle size
-public final float rate = 0.01F; // speed of the animation
+public final float rate = 0.005F; // speed of the animation
 public final color background = color(32);
 
 // VARIABLES
