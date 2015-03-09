@@ -363,7 +363,7 @@ public class Box {
 public class Triangle {
   
   // attributes
-  private float x, y, z;
+  private float x, y;
   private float size;
   private final float initx, inity;
   private final float initialSize;
@@ -373,7 +373,7 @@ public class Triangle {
   // counters [0, 1]
   private float spread;
   
-  // flags [0, 1]
+  // flags
   public boolean spreading;
   
   /** Create a <size> triange at <x, y> facing left (true) or right (false)*/
