@@ -1,7 +1,7 @@
 // CUSTOM
 public final String imageName = "img.jpg";
 public final boolean colour = true;
-public final float dotSize = 32F;
+public final float dotSize = 16F;
 public final color background = color(32);
 
 // VARIABLES
@@ -29,11 +29,11 @@ private void generateDots(PImage image) {
       final int x = int(i * dotSize);
       final int y = int(j * dotSize);
       final color pixel = image.get(x, y);
-      float brightness = (green(pixel) - offset) / 256F;
-      while (brightness > 1) brightness -= 1;
-      while (brightness < 1) brightness += 1;
+      final float brightness = (green(pixel) - offset) / 128F;
+      // brightness = brightness % 1;
       if (colour) fill(pixel);
       ellipse(x / 2F, y / 2F, brightness / 4F * dotSize, brightness / 4F * dotSize);
+      //rect(x / 2F - 2 * dotSize, y / 2F - 2 * dotSize, 2 * dotSize, 2 * dotSize);
     }
   }
 }
@@ -41,5 +41,5 @@ private void generateDots(PImage image) {
 public void draw() {
   background(background);
   generateDots(image);
-  offset++;
+  // offset++;
 }
