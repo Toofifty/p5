@@ -46,7 +46,7 @@ public void setup() {
   noFill();
   strokeWeight(2);
   smooth(8);
-  frameRate(30);
+  frameRate(60);
   stroke(255);
   
   mainBox = new Box(0, 0, 0);
@@ -148,15 +148,18 @@ public void dissolve() {
     createTris();
   }
   unIso();
+  float offset = 0;
   for (Tri tri : triRing) {
     final float distance = dist(tri.x, tri.y, 0, 0);
     if (distance > SQ3 * triSize / 2 && tri.size > 0) {
-      tri.size -= rate * 100;
+      tri.size = min(tri.size, tri.size - rate * 50 - offset);
       tri.draw();
-    } else if (tri.size <= 0) {
-      stage = 0;
-      reset();
     }
+    offset += 0.2F;
+  }
+  if (triRing[0].size <= 0) {
+    stage = 0;
+    reset();
   }
 }
 

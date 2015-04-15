@@ -1,13 +1,14 @@
-int boxsize = 128;
-int gap = 0; // is multiplied by 2
+int boxsize = 116;
+int gap = 4; // is multiplied by 2
 int sat = 150;
 
 float movement = 0;
 int stage = 0;
 float cpos = boxsize / 2 + gap;
+int fadingHue = 0;
 
 void setup() {
-  size(512, 512);
+  size(256, 256);
   background(32);
   frameRate(60);
   fill(255);
@@ -21,7 +22,11 @@ void draw() {
   float sinpos = sin((movement - 30) * PI / 60F);
   int colorHue = int(((sinpos + 1) / 2 + stage) * 64);
   
-  fill(colorHue, 128, 255, 255 - 255 * (sinpos / 2 + 0.5F));
+  if (movement == 0) {
+    fadingHue = colorHue;
+  }
+  
+  fill(fadingHue, sat, 255, 255 - 255 * (sinpos / 2 + 0.5F));
   switch(stage) {
   case 0:
     centreBox(cpos, -cpos, boxsize);
