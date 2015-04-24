@@ -1,99 +1,121 @@
 /*------------------------------------------
   "Hexa Cubes"
   By Alex Matheson
-    toofifty.me | ello.co/purchase | github.com/toofifty
+    toofifty.me | ello.co/matho | github.com/toofifty
 
   Free to redistribute under MIT License.
 ------------------------------------------*/
 
-// "Play with me!" variables.
+// Custom variables
  
-public int t = 0;               // clock
-public int num_cubes = 10;      // number of cubes
-public int spread = 10;         // frames between new cubes rotating
-public int fps = 120;            // fps
-public int s_size = 300;        // screen size
-public float time = 120;        // frames it takes to rotate
-public float size = 20;         // size difference between cubes
-public boolean record = false;  // output to many, many png files
+public final int NUM_CUBES = 10;
+public final int SPREAD = 10;         // frames between new cubes rotating
+public final int SCREEN_SIZE = 300;
+public final float ROTATE_TIME = 120;
+public final float SIZE_DIFF = 20;
+public boolean record = false;        // output to many png files
 
-// "Don't touch!" variables.
+private int t = 0; // clock
+private Cube[] cubes = new Cube[NUM_CUBES];
 
-private Cube[] cubes = new Cube[num_cubes];  // cubes array
-
-// Processing setup call
 void setup () {
-                               // Graphics Setup //
-  size(s_size, s_size, P3D);   // size
-  ortho();                     // no perspective (needed to make hexagons)
-  //frameRate(fps);              // set framerate
-  noFill();                    // don't colour cubes
-  stroke(50);                  // stroke cubes
-  background(255);             // white background
-  smooth(8);                   // anti-alias lines
   
-  for (int i = 0; i < num_cubes; i++) {
-    cubes[i] = new Cube(i * size);       // create larger and larger cubes
+  size(SCREEN_SIZE, SCREEN_SIZE, P3D);
+  ortho();
+  noFill();
+  stroke(50);
+  background(255);
+  smooth(8);
+  
+  for (int i = 0; i < NUM_CUBES; i++) {
+    
+    // cube size increases by SIZE_DIFF each loop
+    cubes[i] = new Cube(i * SIZE_DIFF);
+    
   }
+  
 }
 
-// Processing draw call
 void draw () {
-  background(255);                 // clear screen
-  translate(width/2, height/2, 0); // move to centre of animation
-  rotateX(-0.6153187f);            // position isometrically
+  
+  background(255);
+  translate(width/2, height/2, 0);
+  
+  // isometric angles
+  rotateX(-0.6153187f);
   rotateY(PI/4);
   
-  for (int i = 0; i < num_cubes; i++) {
-    cubes[i].update();                   // update rotation
-    cubes[i].draw();                     // draw cubes
+  for (Cube c : cubes) {
+    
+    c.update();
+    c.draw();
+    
   }
   
-  if (t % spread == 0 && t/spread < num_cubes) {  // offset rotation beginnings
-    cubes[t/spread].s();                          // initiate rotation
+  if (t % SPREAD == 0 && t/SPREAD < NUM_CUBES) {
+ 
+    // begin next cube spinning every
+    // SPREAD frames
+    cubes[t/SPREAD].start();
+    
   }
   
-  if (record) saveFrame("hexa-"+(t+1)+".png");    // save frame if recording
+  if (record) saveFrame("hexa-"+(t+1)+".png");
   
-  t++;                    // increment clock
-  if (t > time * 1.8) {   // restart animation after some time has passed
-    t = 0;                // reset clock
-    record = false;       // stop recording
+  t++;
+  if (t > ROTATE_TIME * 1.8) {
+ 
+    // restart anim
+    t = 0;
+    record = false;
+
   }
 }
 
 class Cube {
-  float s;                 // cube size (in all dimensions)
-  float a = 0;             // rotation angle
-  int t = 0;               // cube clock
-  boolean active = false;  // active switch
+  
+  float size, angle;
+  int t;
+  boolean active = false;
  
-  // Create cube 
   public Cube (float s) {
-    this.s = s;
+    
+    this.size = s;
+    
   }
   
-  // Update rotation value
   public void update () {
+    
     if (active) {
-      if (this.t >= time) {  // deactivate if finished
-        active = false;      // turn off switch
-        this.t = 0;          // reset clock 
-        return;              // quit before changing angle again
+      
+      if (this.t >= ROTATE_TIME) {
+      
+        // reset cube
+        active = false;
+        this.t = 0; 
+        return;
+        
       }
-      this.a = -PI * (cos(this.t * PI / time) + 1) / 2;  // grab angle from cos graph
-      this.t++;                                          // increment internal clock
+      
+      this.angle = -PI * (cos(this.t * PI / ROTATE_TIME) + 1) / 2;
+      this.t++;
+      
     }
+    
   }
   
-  // Start rotation
-  public void s () {
+  public void start() {
+    
     active = true;
+    
   }
   
   public void draw () {
-    rotateY(this.a);   // rotate before drawing
-    box(this.s);       // draw
-    rotateY(-this.a);  // rotate back
+    
+    rotateY(angle);
+    box(size);
+    rotateY(-angle);
+    
   }
+  
 }

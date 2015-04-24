@@ -6,127 +6,151 @@
   Free to redistribute under MIT License.
 ------------------------------------------*/
 
-// "Play with me!" variables.
+// Custom variables
 
-public int num_squares = 7;                      // odds work best
-public int fps = 60;                             // fps
-public int size = 300;                           // screen size
-public float rotate_time = 10;                   // seconds
-public float[] c1 = new float[]{32, 32, 32};     // default grey
-public float[] c2 = new float[]{255, 255, 255};  // default white
-public boolean flip = true;                      // flip direction after each phase
-public boolean record = false;                   // output to many, many png files
+public final int NUM_SQUARES = 7; // odds work best
+public final int SIZE = 300;
+public final float ROTATE_TIME = 10; // seconds
+public final color COLOUR1 = color(32);
+public final color COLOUR2 = color(255);
+public final boolean FLIP = true;    // flip direction after each phase
+public boolean record = false; // output to many png files
 
-// "Don't touch!" variables.
+private Square[] sqs;
+private float sq_d; // diameter
+private float sq_r; // radius
+private boolean phase;
+private int t;      // clock
 
-private Square[] sqs;   // square array
-private float sq_d;     // diameter
-private float sq_r;     // radius
-private int phase = 0;  // phase (0|1)
-private int t = 0;      // clock
-
-// Processing setup call
-void setup () {
-                                                           // Graphics Setup //
-  size(size + size/num_squares, size + size/num_squares);  // make the size a little larger for spinning squares
-  background(c1[0], c1[1], c1[2]);                         // set background to c1 to start
-  frameRate(fps);                                          // set framerate
-  noStroke();                                              // remove black strokes
-  smooth(8);                                               // anti-alias lines
+void setup() {
   
-                                                           // Inital Variable Setup //
-  sqs = new Square[num_squares*num_squares];               // create squares array
-  sq_d = size / num_squares;                               // grab diameter
-  sq_r = sq_d / 2;                                         // grab radius
+  size(SIZE + SIZE/NUM_SQUARES, SIZE + SIZE/NUM_SQUARES);
+  noStroke();
+  smooth(8);
   
-  int n = 0;                                               // Fill Squares Array //
-  for (int j = 0; j < num_squares; j++) {
-    for (int i = 0; i < num_squares; i++) {
-      sqs[j*num_squares+i] = new Square(i, j, n % 2 == 0); // coordinates in multiples of sq_d, as multiplied by
-      n++;                                                 // in the Square class. 
-    }                                                      // alternates between c1 and c2 squares.
+  background(COLOUR1);
+  
+  sqs = new Square[NUM_SQUARES * NUM_SQUARES];
+  sq_d = SIZE / NUM_SQUARES;
+  sq_r = sq_d / 2;
+  
+  boolean col = false; 
+  
+  for (int j = 0; j < NUM_SQUARES; j++) {
+    
+    for (int i = 0; i < NUM_SQUARES; i++) {
+      
+      sqs[j * NUM_SQUARES + i] = new Square(i, j, col);
+      col = !col;
+      
+    }
+    
   }
+  
 }
 
-// Processing draw call
-void draw () {
-  background(c2[0], c2[1], c2[2]);                           // c2 background always present
-  translate(size / num_squares / 2, size / num_squares / 2); // allow for whitespace on the sides
-  if (phase == 0) {
-    fill(c1[0], c1[1], c1[2]);                               // create a psuedo c1 background when in the first
-    rect(0, 0, num_squares * sq_d, num_squares * sq_d);      // phase.
+void draw() {
+  
+  background(COLOUR1);
+  
+  translate(SIZE / NUM_SQUARES / 2, SIZE / NUM_SQUARES / 2);
+  
+  if (phase) {
+    
+    fill(COLOUR2);
+    rect(0, 0, NUM_SQUARES * sq_d, NUM_SQUARES * sq_d);
+    
   }
   
-  for (int n = 0; n < num_squares*num_squares; n++) {
-    if (sqs[n] == null) continue;
-    if (sqs[n].f != phase) {                      // if not in phase, ensure square clock is zero
-      if (sqs[n].t != 0) {
-        sqs[n].clear();
-      }                                           // do not draw square if out of phase
-      continue;                                   // (wont be visible, background will be same colour)
+  for (Square s : sqs) {
+    
+    if (s.group != phase) {
+      
+      if (s.group) {
+        
+        s.reset();
+        
+      }
+      
+      continue;
+      
     }
-    sqs[n].update();                              // apply update to square rotation
-    sqs[n].draw();                                // call square's draw
+    
+    s.update();
+    s.draw();
+    
   }
-  t++;                                            // increment clock
   
-  if (record) {
-    saveFrame("sq_" + nf(t,3) + ".png");          // save frame if recording and not finished
-  }
-  if (t % (fps * rotate_time / 4) == 0) {         // change phase every quarter turn
-    phase = phase == 1 ? 0 : 1;                   // swap phase (could've used bool but meh)
-    if (t % (fps * rotate_time / 2) == 0) {
-      t = 0;                                      // stop recording after a full iteration
+  t++;
+  
+  if (record) saveFrame("sq_" + nf(t,3) + ".png");
+  
+  if (t % (60 * ROTATE_TIME / 4) == 0) {
+    
+    phase = !phase;
+    
+    if (t % (60 * ROTATE_TIME / 2) == 0) {
+      
+      t = 0;
       record = false;
+      
     }
+    
   }
+  
 }
 
 class Square {
-  float x;    // centre
-  float y;    // centre
-  float[] c;  // colour
-  float r;    // rotation
-  float t;    // rotation clock
-  int f;      // phase group
   
-  // Create square
-  Square (float _x, float _y, boolean _f) {
-    this.x = _x*sq_d + sq_r;
-    this.y = _y*sq_d + sq_r;
-    this.f = _f ? 1 : 0;
-    this.r = 0;
-    this.t = 0;
-    this.c = _f ? c1 : c2;
-  }
+  float x, y;
+  color colour;
+  float rotation, time;
+  boolean group;
   
-  // Update rotation value
-  void update () {
-    float dr = sin(4*this.t*PI/(fps * rotate_time))/fps; // sin speeds up and slows down just perfect
+  Square(float x, float y, boolean g) {
     
-    if (flip && f == 1) { // go in opposite direction if flip is enabled
-      this.r -= dr;
-      this.r = max(r, -PI/2);
-      this.r = min(r, 0);
+    this.x = x * sq_d + sq_r;
+    this.y = y * sq_d + sq_r;
+    this.group = g;
+    this.colour = g ? COLOUR1 : COLOUR2;
+    
+  }
+  
+  void update() {
+    
+    float dr = sin(4 * time * PI / (60 * ROTATE_TIME)) / 60;
+    
+    if (FLIP && group) {
+      
+      rotation -= dr;
+      rotation = constrain(rotation, -HALF_PI, 0);
+      
     } else {
-      this.r += dr;            // apply regular rotation
-      this.r = min(r, PI/2);   // wouldn't be needed but doesn't stop exactly on PI/4
-      this.r = max(r, 0);      // shouldn't go far backwards either
+      
+      rotation += dr;
+      rotation = constrain(rotation, 0, HALF_PI);
     }
-    this.t++;
+    
+    time++;
+    
   }
   
-  void clear () {
-    this.t = 0;
-    this.r = 0;
+  void reset() {
+    
+    rotation = 0;
+    time = 0;
+    
   }
   
-  void draw () {
-    translate(this.x, this.y);              // go to point to apply rotation around square centre
-    rotate(this.r);                              // rotate by pre calculated r
-    fill(this.c[0], this.c[1], this.c[2]);  // set fill colour
-    rect(-sq_r, -sq_r, sq_d, sq_d);         // draw square centred around current point
-    rotate(-this.r);                             // rotate back
-    translate(-this.x, -this.y);            // move back
+  void draw() {
+    
+    translate(x, y);
+    rotate(rotation);
+    fill(colour);
+    rect(-sq_r, -sq_r, sq_d, sq_d);
+    rotate(-rotation);
+    translate(-x, -y);
+    
   }
+  
 }

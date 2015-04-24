@@ -8,7 +8,7 @@ Drop[] rain = new Drop[DROPS];
 PGraphics colliders;
 
 void setup() {
-  size(400, 600);
+  size(800, 600);
   noStroke();
   background(32);
   colorMode(HSB, 255);

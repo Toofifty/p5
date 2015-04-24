@@ -1,45 +1,44 @@
 // CUSTOM
-public final String imageName = "img.jpg";
-public final boolean colour = true;
-public final float dotSize = 16F;
-public final color background = color(32);
+public final String IMAGE_NAME = "img.jpg";
+public final boolean COLOUR = true;
+public final float DOT_SIZE = 16F;
+public final color BG = color(32);
 
 // VARIABLES
 public PImage image;
 
-// COUNTERS
-public int offset = 0;
-
 public void setup() {
-  image = loadImage(imageName);
+  
+  image = loadImage(IMAGE_NAME);
   size(image.width / 2, image.height / 2);
   noStroke();
   //noLoop();
-  background(background);
+  background(BG);
   
   generateDots(image);
+  
+  noLoop();
+  
 }
 
 private void generateDots(PImage image) {
-  final int xDots = ceil(image.width / dotSize);
-  final int yDots = ceil(image.height / dotSize);
+  
+  final int xDots = ceil(image.width / DOT_SIZE);
+  final int yDots = ceil(image.height / DOT_SIZE);
   
   for (int i = 0;  i < xDots; i++) {
+    
     for (int j = 0; j < yDots; j++) {
-      final int x = int(i * dotSize);
-      final int y = int(j * dotSize);
+      
+      final int x = int(i * DOT_SIZE);
+      final int y = int(j * DOT_SIZE);
       final color pixel = image.get(x, y);
-      final float brightness = (green(pixel) - offset) / 128F;
-      // brightness = brightness % 1;
-      if (colour) fill(pixel);
-      ellipse(x / 2F, y / 2F, brightness / 4F * dotSize, brightness / 4F * dotSize);
-      //rect(x / 2F - 2 * dotSize, y / 2F - 2 * dotSize, 2 * dotSize, 2 * dotSize);
+      final float brightness = (green(pixel)) / 128F;
+      if (COLOUR) fill(pixel);
+      ellipse(x / 2F, y / 2F, brightness / 4F * DOT_SIZE, brightness / 4F * DOT_SIZE);
+      
     }
+    
   }
-}
-
-public void draw() {
-  background(background);
-  generateDots(image);
-  // offset++;
+  
 }

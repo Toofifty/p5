@@ -10,18 +10,26 @@ public class Particle {
   private float time = 0;
   private float size;
   
-  public Particle(float x, float y, color _colour, float _maxSize, float _aliveTime, float maxVel) {
+  public Particle(float x, float y, color _colour, float _maxSize, float _aliveTime, float maxVel, boolean noRight) {
     
     position = new PVector(x, y);
-    velocity = new PVector(random(-maxVel, maxVel), random(-maxVel, maxVel));
+    velocity = new PVector(random(-maxVel, noRight ? 0 : maxVel), random(-maxVel, maxVel));
     colour = _colour;
     maxSize = size = _maxSize;
     aliveTime = _aliveTime;
     
   }
   
+  public Particle(float x, float y, color _colour, float _maxSize, float _aliveTime, float maxVel) {
+    
+    this(x, y, _colour, _maxSize, _aliveTime, maxVel, false);
+  
+  }
+  
   public boolean isDead() {
+    
     return time >= aliveTime;
+    
   }
   
   public void update() {
@@ -36,8 +44,18 @@ public class Particle {
     
     time += dt;
     
-    if (position.y + size / 2 > WHITESPACE + GAME_HEIGHT || position.y - size / 2 < WHITESPACE) {
+    if (player.dead) time += dt * 100;
+    
+    if (position.y + size / 2 > whitespace + GAME_HEIGHT) {
+      
       velocity.y *= -1;
+      position.y = whitespace + GAME_HEIGHT - size / 2;
+      
+    } else if (position.y - size / 2 < whitespace) {
+      
+      velocity.y *= -1;
+      position.y = whitespace + size / 2;
+      
     }
     
   }

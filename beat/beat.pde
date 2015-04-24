@@ -11,49 +11,41 @@
   Free to redistribute under MIT License.
 ------------------------------------------*/
 
-// "Play with me!" variables.
+// Custom variables
 
-public int sub_cubes_amount = 20;  // amount of sub cubes
-public int max_sub_d = 400;        // max distance of sub cubes
-public float peak_level = 5;       // level to create sub cubes
-public float bg_t = 20;            // background transparency (higher = less fade)
-
-// "Don't touch!" variables.
+public final int SUB_CUBES_AMT = 20;
+public final int MAX_SUBC_DIST = 400;    // max distance of sub cubes
+public final float PEAK_LEVEL = 5;       // level to create sub cubes
+public final float BG_TRANSP = 20;       // background transparency (higher = less fade)
  
-import ddf.minim.*;           // import Minim
-import ddf.minim.analysis.*;  // import FFT things
-Minim minim;                  // create variables
+import ddf.minim.*;
+import ddf.minim.analysis.*;
+Minim minim;
 AudioPlayer music;
 AudioRenderer beat;
 
-// Processing setup call
-void setup () {
-                               // Graphics Setup //
-  size(1920, 1080, P3D);       // size
-  perspective();               // perspective
-  frameRate(120);              // set framerate
+void setup () {  
   
-                                             // Minim Player creation //
-  minim = new Minim(this);                   // create
-  music = minim.loadFile("play.mp3", 1024);  // load "play.mp3" in directory
-  music.loop();                              // loop music
+  size(1920, 1080, P3D);
+  perspective();
+  frameRate(120);
+  noStroke();
   
-  beat = new BeatRenderer(music);            // create music visualizer
+  minim = new Minim(this);
+  music = minim.loadFile("play.mp3", 1024);
+  music.loop();
   
-  music.addListener(beat);                   // send music to beat renderer
+  beat = new BeatRenderer(music);
   
-  beat.setup();
+  music.addListener(beat);
+  
 }
 
-// Processing draw call
 void draw () {
+  
   beat.draw();
+  
 }
-
-/*------------------------------------------
-  Moved renderer here to help with
-  variable playing :)
-------------------------------------------*/
 
 // Audio Renderers credit to Martin Schneider //
 abstract class AudioRenderer implements AudioListener {
@@ -61,7 +53,6 @@ abstract class AudioRenderer implements AudioListener {
   float[] right;
   synchronized void samples(float[] samp) { left = samp; }
   synchronized void samples(float[] sampL, float[] sampR) { left = sampL; right = sampR; }
-  abstract void setup();
   abstract void draw();
 }
 
@@ -99,18 +90,17 @@ class BeatRenderer extends FourierRenderer {
   float t = 0;
   
   BeatRenderer (AudioSource s) {
+    
     super(s);
-  }
-  
-  void setup () {
-    noStroke();
+    
   }
   
   void draw () {
+    
     super.calc(10);
     
     translate(0, 0, -1000);                                                          // move back to draw background
-    fill(leftFFT[6] * 123 - 50, leftFFT[7] * 123 - 50, leftFFT[8] * 123 - 50, bg_t); // fill for background based on small channels
+    fill(leftFFT[6] * 123 - 50, leftFFT[7] * 123 - 50, leftFFT[8] * 123 - 50, BG_TRANSP); // fill for background based on small channels
     rect(-width / 2, -height / 2, width * 2, height * 2);                            // draw background with transparency for blur-like effects
     translate(width / 2, height / 2, 1000);                                          // move to original, and into the centre
     
@@ -125,20 +115,24 @@ class BeatRenderer extends FourierRenderer {
     translate(-600 - leftFFT[1] * 20, 0, 0);   // move to the other size of cube 1
     box(leftFFT[1] * 30 + 10);                 // draw cube 3
     
-    if (leftFFT[1] > peak_level) {       // check if the largest channel spikes
+    if (leftFFT[1] > PEAK_LEVEL) {       // check if the largest channel spikes
+      
       translate(300, 0, 0);     // move back to centre from cube 3
       
-      for (int i = 0; i < sub_cubes_amount; i++) {                                                            // create N smaller cubes      
-        float tr_x = random(-max_sub_d, max_sub_d);                                                           // randomize x
-        float tr_y = random(-sqrt(pow(max_sub_d, 2) - pow(tr_x, 2)), sqrt(pow(max_sub_d, 2) - pow(tr_x, 2))); // randomize y, make sure x + y create a sphere
-        float tr_z = random(-max_sub_d, max_sub_d);                                                           // randomize z
+      for (int i = 0; i < SUB_CUBES_AMT; i++) { 
+        // create N smaller cubes      
+        float tr_x = random(-MAX_SUBC_DIST, MAX_SUBC_DIST);                                                           // randomize x
+        float tr_y = random(-sqrt(pow(MAX_SUBC_DIST, 2) - pow(tr_x, 2)), sqrt(pow(MAX_SUBC_DIST, 2) - pow(tr_x, 2))); // randomize y, make sure x + y create a sphere
+        float tr_z = random(-MAX_SUBC_DIST, MAX_SUBC_DIST);                                                           // randomize z
         
         translate(tr_x, tr_y, tr_z);             // translate to new position
         box(leftFFT[1] * 10 + random(-50, 50));  // draw small cube dependent on largest channel (already know it is at least 50)
         translate(-tr_x, -tr_y, -tr_x);          // translate back
+      
       }
     }
     t++;
+    
   }
   
 }
