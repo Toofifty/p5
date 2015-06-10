@@ -21,8 +21,8 @@
 
 /* SETTINGS - WORLD */
 
-  final int MAP_SIZE = 128;
-  final int TILE_SIZE = 64;
+  final int MAP_SIZE = 64;
+  final int TILE_SIZE = 128;
 
 /* --- END SETTINGS --- */
 
@@ -40,7 +40,7 @@
   
   // Movement directions
   // forward, left, up
-  int mForward, mLeft, mUp;
+  int mForward = 1, mLeft, mUp;
   
   /// Graphics
   
@@ -78,19 +78,26 @@ void draw() {
   cx += 50 * -mForward * sin(ry);
   cz += 50 *  mForward * cos(ry);
   
-  cx += 20 *  mLeft * sin(ry + HALF_PI);
-  cz += 20 * -mLeft * cos(ry + HALF_PI);
+  ry -= rz / 10.0;
+  
+  rz += mLeft / 50.0;
+  
+  rz = constrain(rz, -HALF_PI / 2, HALF_PI / 2);
+  
+  if (mLeft == 0) {
+    rz /= 1.08;
+  }
   
   sry += (ry - sry) / 4;
-  srz += (rz - srz) / 4;
+  //srz += (rz - srz) / 4;
   
   //cy = terrainVertex(MAP_SIZE / 2, MAP_SIZE / 2).y;
   
-  translate(width / 2, height / 2);
+  translate(width / 2, height / 2, 500);
   
+  rotateZ(rz);
   rotateX(rx);
   rotateY(ry);
-  rotateZ(rz);
   
   translate(cx - MAP_SIZE * TILE_SIZE / 2, 800 - cy, cz - MAP_SIZE * TILE_SIZE / 2);
   
@@ -114,14 +121,14 @@ void draw() {
   drawShip();
   drawFog();
   
-  rotateZ(-rz);
   rotateY(-ry);
   rotateX(-rx);
+  rotateZ(-rz + (sry - ry) / 4);
   
   translate(-width / 2, -height / 2);
   
   fill(255);
-  text(int(frameRate) + "FPS", 10, 40);
+  text(int(frameRate) + "FPS", 50, 80);
   
   filter(pxShader);
   
@@ -131,7 +138,7 @@ void draw() {
 
 void mouseDragged() {
   
-  ry += (float) (mouseX - pmouseX) / 100;
+  //ry += (float) (mouseX - pmouseX) / 100;
   rx -= (float) (mouseY - pmouseY) / 100;
   
 }
@@ -247,6 +254,7 @@ PVector terrainVertex(int i, int j) {
 
 float terrainNoise(int i, int j) {
   float v = -noise(i / 10.0, j / 10.0) * 1200;
+  v *= 2 * noise((i - 1000) / 10.0, j / 10.0);
   //v -= pow(noise((i + 1000) / 100.0, j / 100.0), 8) * 20000;
   return v;
 }
