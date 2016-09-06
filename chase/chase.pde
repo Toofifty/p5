@@ -1,4 +1,4 @@
-Dot[] dots = new Dot[4096];
+Dot[] dots = new Dot[1024];
 float size = 8;
 float maxdist;
 float G = 0.1;
@@ -167,4 +167,3 @@ class Dot {
   }
   
 }
-

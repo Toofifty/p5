@@ -1,6 +1,6 @@
 int boxsize = 116;
 int gap = 4; // is multiplied by 2
-int sat = 150;
+int sat = 128;
 
 float movement = 0;
 int stage = 0;

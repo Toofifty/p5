@@ -9,7 +9,7 @@
   
   // Screen will have 2^PIXEL_SCALE pixels
   // in height/width
-  final int PIXEL_SCALE = 8;
+  final int PIXEL_SCALE = 5;
   
   // Color of the linear fog
   final color FOG_COLOR = color(142, 176, 255);
@@ -56,7 +56,7 @@
 
 void setup() {
   
-  size(GAME_SIZE, GAME_SIZE, P3D);
+  size(512, 512, P3D);
   noStroke();
   smooth(0);
   fill(255);

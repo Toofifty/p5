@@ -63,7 +63,8 @@ class Arc {
   
   public void draw () {
     translate(0, 0, -z);
-    arc(0, 0, r*2, r*2, f * -PI + float(frameCount)/60, f * PI + float(frameCount)/60, OPEN);
+    fill(0, 0, 0, 10);
+    arc(0, 0, r*2, r*2, f * -PI + float(frameCount)/60, f * PI + float(frameCount)/60);
     translate(0, 0, z);
   }
   

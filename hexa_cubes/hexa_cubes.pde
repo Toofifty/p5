@@ -20,7 +20,7 @@ private Cube[] cubes = new Cube[NUM_CUBES];
 
 void setup () {
   
-  size(SCREEN_SIZE, SCREEN_SIZE, P3D);
+  size(300, 300, P3D);
   ortho();
   noFill();
   stroke(50);

@@ -3,11 +3,11 @@
 public final int SIZE = 512; // initial. Grows twice as large
 
 public int iteration = 0;
-PGraphics background;
+PGraphics background = createGraphics(SIZE, SIZE);;
 
 public void setup() {
   
-  size(SIZE * 2, SIZE * 2, P3D); // must be a multiple of size
+  size(1024, 1024, P3D); // must be a multiple of size
   smooth(8);
   frameRate(60);
   background(18, 28, 63);
@@ -19,8 +19,6 @@ public void setup() {
 public void draw() {
   
   if (frameCount == 1) {
-    
-    background = createGraphics(width, height);
     
     float low = 10;
     float high = 0;

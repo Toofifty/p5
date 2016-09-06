@@ -34,7 +34,7 @@ ControlFrame cf;
 
 void setup () {
   img = loadImage("img.jpg");
-  size(img.width, img.height, P3D);
+  size(500, 500, P3D);
   smooth(8);
   frameRate(60);
   ortho();
@@ -163,4 +163,3 @@ PVector findCentre (PVector p1, PVector p2, PVector p3) {
   float y = (p1.y + p2.y + p3.y) / 3;
   return new PVector(x, y);
 }
-

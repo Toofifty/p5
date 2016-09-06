@@ -10,7 +10,7 @@ public PImage image;
 public void setup() {
   
   image = loadImage(IMAGE_NAME);
-  size(image.width / 2, image.height / 2);
+  size(1000, 1000);
   noStroke();
   //noLoop();
   background(BG);

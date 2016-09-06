@@ -35,7 +35,7 @@ void setup() {
 void draw() {
   
   fill(0, 1);
-  rect(0, 0, width, height);
+  //rect(0, 0, width, height);
   fill(255);
   
   translate(width / 2, height / 2);

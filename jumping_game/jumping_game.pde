@@ -28,7 +28,7 @@ public float speed = 0.5;
 
 public void setup() {
   
-  size(WIDTH, HEIGHT);
+  size(800, 400);
   noStroke();
   colorMode(HSB, 255);
   textSize(10);
