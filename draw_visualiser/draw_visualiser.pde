@@ -8,10 +8,12 @@ float[] sum = new float[bands];
 
 float smoothFactor = 0.2;
 
+float min = 2000;
+
 Segment firstSeg, lastSeg;
 
 int numSegs = 0;
-int segSize = 2;
+int segSize = 5;
 
 PVector startPoint = new PVector(400, 300);
 
@@ -19,7 +21,7 @@ float factor = 1;
 
 void setup() {
   
-  size(800, 600, P2D);
+  size(2560, 1440, P2D);
   fill(128);
   noStroke();
   //stroke(255);
@@ -27,7 +29,7 @@ void setup() {
   
   // music
   music = new SoundFile(this, "play.mp3");
-  music.play();
+  music.loop();
   
   fft = new FFT(this, bands);
   fft.input(music);
@@ -39,9 +41,11 @@ void setup() {
 void draw() {
   
   //background(32);
-  fill(32, 8);
+  fill(32, 32);
   rect(0, 0, width, height);
-  fill((getFourier(3) + frameCount / 100) % 255, 128, 255);
+  fill((getFourier(bands) * 3 + 96) % 255, 128, 255, 4);
+  rect(0, 0, width, height);
+  fill((getFourier(bands) * 3 + 96) % 255, 128, 255);
   
   fft.analyze();
   
@@ -96,6 +100,7 @@ void keyPressed() {
     case 83: // S (set start)
       startPoint.x = mouseX;
       startPoint.y = mouseY;
+      min = 1000;
       break;
     default:
       println(keyCode);
@@ -112,8 +117,12 @@ float getFourier(int n) {
   //println(spectrum[n % bands]);
   //return spectrum[n % bands] * 200 * factor;
   
-  return 100 * sum[n % bands] * (n % bands + 1);
-  
+  float t = 100 * sum[n % (bands / 2)] * (n % (bands / 2) + 1) - 0.25;
+  if (t < min && t > 0) {
+    min = t;
+    println(min);
+  }
+  return t;
 }
 
 class Segment {
