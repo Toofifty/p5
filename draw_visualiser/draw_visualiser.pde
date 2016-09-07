@@ -117,12 +117,7 @@ float getFourier(int n) {
   //println(spectrum[n % bands]);
   //return spectrum[n % bands] * 200 * factor;
   
-  float t = 100 * sum[n % (bands / 2)] * (n % (bands / 2) + 1) - 0.25;
-  if (t < min && t > 0) {
-    min = t;
-    println(min);
-  }
-  return t;
+  return 100 * sum[n % (bands / 2)] * (n % (bands / 2) + 1);
 }
 
 class Segment {
