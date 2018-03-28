@@ -18,8 +18,8 @@ float spreadDilate = 10; // Amount that spread affects height
 float antiSpike = 0.1; // Higher number reduces the huge spike in the centre, but makes all waves smaller
 int whitespaceX = 400;
 int whitespaceY = 400;
-int numPointsX = 1000;
-int numPointsY = 10;
+int numPointsX = 100;
+int numPointsY = 100;
 int alphaFade = 0; // Set to 255 to disable fading
 int heightDilate = 5; // Exponent dilating height by distance
 int fadeType = 1; // 0: Height-based, 1: Distance-based, 2: Random
@@ -50,6 +50,8 @@ int[][] orangeHues = new int[][]{
 
 void setup () {
   createbuttons();
+  // Setup
+  size(1280, 720, P3D);
   begin();
 }
 
@@ -153,8 +155,6 @@ void mousePressed () {
 }
 
 void begin () {
-  // Setup
-  size(1280, 720, P3D);
   background(0);
     
   // Initial variable setting
@@ -195,7 +195,6 @@ void draw () {
     for (int i = 0; i < nX; i++) {
       points[j*nX + i].update();
       points[j*nX + i].display();
-      print("tits");
     }
     endShape();
   }

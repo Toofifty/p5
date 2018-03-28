@@ -74,6 +74,7 @@ abstract class Slider extends Base {
     super(x, y, w, h, par);
     this.min = min;
     this.max = max;
+    this.v = v;
     
     float relX = v / (max-min);
     float absX = w * relX * 0.8;
